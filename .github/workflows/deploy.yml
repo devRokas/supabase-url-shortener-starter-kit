@@ -1,0 +1,31 @@
+name: Deploy
+
+on:
+  push:
+    branches:
+      - master
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_DB_PASSWORD: ${{secrets.SUPABASE_DB_PASSWORD}}
+      PROJECT_ID: ${{secrets.SUPABASE_PROJECT_ID}}
+      SECRETS: ${{secrets.BASE_EDGE_FUNCTION_URL}}
+    steps:
+      - uses: actions/checkout@v3
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+      - name: Run Database Migrations
+        run: |
+          supabase link --project-ref $PROJECT_ID 
+          supabase db push
+      - name: Set Secrets
+        run: |
+          supabase link --project-ref $PROJECT_ID 
+          supabase secrets set $SECRETS
+      - name: Deploy
+        run: supabase functions deploy --project-ref $PROJECT_ID --debug
